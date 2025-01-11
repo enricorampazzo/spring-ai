@@ -19,10 +19,9 @@ package org.springframework.ai.autoconfigure.chat.memory.neo4j;
 import com.datastax.driver.core.utils.UUIDs;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.memory.neo4j.Neo4jChatMemory;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.messages.MessageType;
-import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.memory.neo4j.Neo4jChatMemoryConfig;
+import org.springframework.ai.chat.messages.*;
+import org.springframework.ai.chat.messages.ToolResponseMessage.ToolResponse;
 import org.springframework.ai.model.Media;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.neo4j.Neo4jAutoConfiguration;
@@ -61,53 +60,92 @@ class Neo4jChatMemoryAutoConfigurationIT {
 
 	@Test
 	void addAndGet() {
-		this.contextRunner.withPropertyValues("spring.neo4j.uri=" + neo4jContainer.getBoltUrl(),
-						"spring.ai.chat.memory.neo4j.assistantLabel", "AssistantMsg",
-						"spring.ai.chat.memory.neo4j.userLabel", "UserMsg")
+		this.contextRunner.withPropertyValues("spring.neo4j.uri=" + neo4jContainer.getBoltUrl())
 				.run(context -> {
 				Neo4jChatMemory memory = context.getBean(Neo4jChatMemory.class);
 
 				String sessionId = UUIDs.timeBased().toString();
 				assertThat(memory.get(sessionId, Integer.MAX_VALUE)).isEmpty();
 
-				memory.add(sessionId, new UserMessage("test question"));
+				UserMessage userMessage = new UserMessage("test question");
 
-				assertThat(memory.get(sessionId, Integer.MAX_VALUE)).hasSize(1);
-				assertThat(memory.get(sessionId, Integer.MAX_VALUE).get(0).getMessageType())
-					.isEqualTo(MessageType.USER);
-				assertThat(memory.get(sessionId, Integer.MAX_VALUE).get(0).getText()).isEqualTo("test question");
+
+				memory.add(sessionId, userMessage);
+				List<Message> messages =  memory.get(sessionId, Integer.MAX_VALUE);
+				assertThat(messages).hasSize(1);
+				assertThat(messages.get(0)).usingRecursiveAssertion().isEqualTo(userMessage);
 
 				memory.clear(sessionId);
 				assertThat(memory.get(sessionId, Integer.MAX_VALUE)).isEmpty();
 
-				memory.add(sessionId, List.of(new UserMessage("test question"), new AssistantMessage("test answer", Map.of(), List.of(new AssistantMessage.ToolCall("id", "type", "name", "arguments")))));
+				AssistantMessage assistantMessage = new AssistantMessage("test answer", Map.of(),
+						List.of(new AssistantMessage.ToolCall(
+								"id", "type", "name", "arguments")));
 
-				assertThat(memory.get(sessionId, Integer.MAX_VALUE)).hasSize(2);
-				assertThat(memory.get(sessionId, Integer.MAX_VALUE).get(1).getMessageType())
-					.isEqualTo(MessageType.USER);
-				assertThat(memory.get(sessionId, Integer.MAX_VALUE).get(1).getText()).isEqualTo("test question");
-				assertThat(memory.get(sessionId, Integer.MAX_VALUE).get(0).getMessageType())
-					.isEqualTo(MessageType.ASSISTANT);
-				assertThat(memory.get(sessionId, Integer.MAX_VALUE).get(0).getText()).isEqualTo("test answer");
-				assertThat(((AssistantMessage) memory.get(sessionId, Integer.MAX_VALUE).get(0)).getToolCalls().size()).isEqualTo(1);
-				assertThat(((AssistantMessage) memory.get(sessionId, Integer.MAX_VALUE).get(0)).getToolCalls().get(0)).isEqualTo(new AssistantMessage.ToolCall("id", "type", "name", "arguments"));
-				memory.add(sessionId, new UserMessage("Message with media", List.of(Media.builder()
-						.name("some media").id(UUIDs.random().toString()).mimeType(MimeType.valueOf("text/plain"))
-						.data("hello".getBytes(StandardCharsets.UTF_8)).build(),
-						Media.builder().data(URI.create("http://www.google.com").toURL())
-								.mimeType(MimeType.valueOf("text/plain")).build())));
-				List<Message> messages = memory.get(sessionId, 1);
-				assert messages.size() == 1;
+				memory.add(sessionId, List.of(userMessage, assistantMessage));
+				messages = memory.get(sessionId, Integer.MAX_VALUE);
+				assertThat(messages).hasSize(2);
+				assertThat(messages.get(1)).isEqualTo(userMessage);
+
+				assertThat(messages.get(0)).isEqualTo(assistantMessage);
+				memory.clear(sessionId);
+				MimeType textPlain = MimeType.valueOf("text/plain");
+				List<Media> media = List.of(Media.builder().name("some media").id(UUIDs.random().toString())
+								.mimeType(textPlain).data("hello".getBytes(StandardCharsets.UTF_8)).build(),
+						Media.builder().data(URI.create("http://www.google.com").toURL()).mimeType(textPlain).build());
+				UserMessage userMessageWithMedia = new UserMessage("Message with media", media);
+				memory.add(sessionId, userMessageWithMedia);
+
+				messages = memory.get(sessionId, Integer.MAX_VALUE);
 				assertThat(messages.size()).isEqualTo(1);
-				assertThat(messages.get(0)).isInstanceOf(UserMessage.class);
+				assertThat(messages.get(0)).isEqualTo(userMessageWithMedia);
 				assertThat(((UserMessage)messages.get(0)).getMedia()).hasSize(2);
-				assertThat(((UserMessage) messages.get(0)).getMedia().get(0).getData())
-						.isEqualTo("http://www.google.com");
-				assertThat(((UserMessage) messages.get(0)).getMedia().get(1).getData())
-						.isEqualTo("hello".getBytes(StandardCharsets.UTF_8));
-				assertThat(((UserMessage) messages.get(0)).getMedia().get(1).getName()).isEqualTo("some media");
+				assertThat(((UserMessage) messages.get(0)).getMedia()).usingRecursiveFieldByFieldElementComparator().isEqualTo(media);
+				memory.clear(sessionId);
+				ToolResponseMessage toolResponseMessage = new ToolResponseMessage(List.of(
+						new ToolResponse("id", "name", "responseData"),
+						new ToolResponse("id2", "name2", "responseData2")),
+						Map.of("id", "id", "metadataKey", "metadata"));
+				memory.add(sessionId, toolResponseMessage);
+				messages = memory.get(sessionId, Integer.MAX_VALUE);
+				assertThat(messages.size()).isEqualTo(1);
+				assertThat(messages.get(0)).isEqualTo(toolResponseMessage);
 
+				memory.clear(sessionId);
+				SystemMessage sm = new SystemMessage("this is a System message");
+				memory.add(sessionId, sm);
+				messages = memory.get(sessionId, Integer.MAX_VALUE);
+				assertThat(messages).hasSize(1);
+				assertThat(messages.get(0)).usingRecursiveAssertion().isEqualTo(sm);
 			});
+	}
+	@Test
+	void setCustomConfiguration(){
+		final String sessionLabel = "LabelSession";
+		final String toolCallLabel = "LabelToolCall";
+		final String metadataLabel = "LabelMetadata";
+		final String messageLabel = "LabelMessage";
+		final String toolResponseLabel = "LabelToolResponse";
+		final String mediaLabel = "LabelMedia";
+
+		final String propertyBase = "spring.ai.chat.memory.neo4j.%s=%s";
+		this.contextRunner.withPropertyValues("spring.neo4j.uri=" + neo4jContainer.getBoltUrl(),
+						propertyBase.formatted("sessionLabel", sessionLabel),
+						propertyBase.formatted("toolCallLabel", toolCallLabel),
+						propertyBase.formatted("metadataLabel", metadataLabel),
+						propertyBase.formatted("messageLabel", messageLabel),
+						propertyBase.formatted("toolResponseLabel", toolResponseLabel),
+						propertyBase.formatted("mediaLabel", mediaLabel))
+				.run(context -> {
+					Neo4jChatMemory chatMemory = context.getBean(Neo4jChatMemory.class);
+					Neo4jChatMemoryConfig config = chatMemory.getConfig();
+					assertThat(config.getMessageLabel()).isEqualTo(messageLabel);
+					assertThat(config.getMediaLabel()).isEqualTo(mediaLabel);
+					assertThat(config.getMetadataLabel()).isEqualTo(metadataLabel);
+					assertThat(config.getSessionLabel()).isEqualTo(sessionLabel);
+					assertThat(config.getToolResponseLabel()).isEqualTo(toolResponseLabel);
+					assertThat(config.getToolCallLabel()).isEqualTo(toolCallLabel);
+				});
 	}
 
 

@@ -1,9 +1,7 @@
 package org.springframework.ai.chat.memory.neo4j;
 
-import org.springframework.ai.chat.messages.ToolResponseMessage;
-
 public enum ToolResponseAttributes {
-	IDX("idx"), RESPONSE_DATA("responseData"), NAME("name");
+	IDX("idx"), RESPONSE_DATA("responseData"), NAME("name"), ID("id");
 
 	private final String value;
 

@@ -29,8 +29,7 @@ import org.springframework.context.annotation.Bean;
 /**
  * {@link AutoConfiguration Auto-configuration} for {@link Neo4jChatMemory}.
  *
- * @author Mick Semb Wever
- * @author Jihoon Kim
+ * @author Enrico Rampazzo
  * @since 1.0.0
  */
 @AutoConfiguration(after = Neo4jAutoConfiguration.class)
@@ -42,15 +41,11 @@ public class Neo4jChatMemoryAutoConfiguration {
 	@ConditionalOnMissingBean
 	public Neo4jChatMemory chatMemory(Neo4jChatMemoryProperties properties, Driver driver) {
 
-		var builder = Neo4jChatMemoryConfig.builder().withDriver(driver);
-
-		builder.withAssistantLabelName(properties.getAssistantLabel());
-		builder.withUserLabelName(properties.getUserLabel());
-
-
-		if (null != properties.getTimeToLive()) {
-			builder = builder.withTimeToLive(properties.getTimeToLive());
-		}
+		var builder = Neo4jChatMemoryConfig.builder().withMediaLabel(properties.getMediaLabel())
+				.withMessageLabel(properties.getMessageLabel()).withMetadataLabel(properties.getMetadataLabel())
+				.withSessionLabel(properties.getSessionLabel()).withToolCallLabel(properties.getToolCallLabel())
+				.withToolResponseLabel(properties.getToolResponseLabel())
+				.withDriver(driver);
 
 		return Neo4jChatMemory.create(builder.build());
 	}

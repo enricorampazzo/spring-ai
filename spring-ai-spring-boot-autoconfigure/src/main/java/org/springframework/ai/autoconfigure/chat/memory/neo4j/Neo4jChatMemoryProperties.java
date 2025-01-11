@@ -16,58 +16,71 @@
 
 package org.springframework.ai.autoconfigure.chat.memory.neo4j;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.ai.autoconfigure.chat.memory.CommonChatMemoryProperties;
 import org.springframework.ai.chat.memory.neo4j.Neo4jChatMemoryConfig;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.lang.Nullable;
-
-import java.time.Duration;
 
 /**
- * Configuration properties for Cassandra chat memory.
+ * Configuration properties for Neo4j chat memory.
  *
- * @author Mick Semb Wever
- * @author Jihoon Kim
- * @since 1.0.0
+ * @author Enrico Rampazzo
  */
 @ConfigurationProperties(Neo4jChatMemoryProperties.CONFIG_PREFIX)
-public class Neo4jChatMemoryProperties extends CommonChatMemoryProperties {
+public class Neo4jChatMemoryProperties {
 
 	public static final String CONFIG_PREFIX = "spring.ai.chat.memory.neo4j";
+	private String sessionLabel = Neo4jChatMemoryConfig.DEFAULT_SESSION_LABEL;
+	private String toolCallLabel = Neo4jChatMemoryConfig.DEFAULT_TOOL_CALL_LABEL;
+	private String metadataLabel = Neo4jChatMemoryConfig.DEFAULT_METADATA_LABEL;
+	private String messageLabel = Neo4jChatMemoryConfig.DEFAULT_MESSAGE_LABEL;
+	private String toolResponseLabel = Neo4jChatMemoryConfig.DEFAULT_TOOL_RESPONSE_LABEL;
+	private String mediaLabel = Neo4jChatMemoryConfig.DEFAULT_MEDIA_LABEL;
 
-	private static final Logger logger = LoggerFactory.getLogger(Neo4jChatMemoryProperties.class);
-
-	private String assistantLabel = Neo4jChatMemoryConfig.DEFAULT_ASSISTANT_LABEL;
-
-	private String userLabel = Neo4jChatMemoryConfig.DEFAULT_USER_LABEL;
-
-	private Duration timeToLive = null;
-
-	public String getAssistantLabel() {
-		return this.assistantLabel;
+	public String getSessionLabel() {
+		return sessionLabel;
 	}
 
-	public void setAssistantLabel(String assistantLabel) {
-		this.assistantLabel = assistantLabel;
+	public void setSessionLabel(String sessionLabel) {
+		this.sessionLabel = sessionLabel;
 	}
 
-	public String getUserLabel() {
-		return this.userLabel;
+	public String getToolCallLabel() {
+		return toolCallLabel;
 	}
 
-	public void setUserLabel(String userLabel) {
-		this.userLabel = userLabel;
+	public String getMetadataLabel() {
+		return metadataLabel;
 	}
 
-	@Nullable
-	public Duration getTimeToLive() {
-		return this.timeToLive;
+	public String getMessageLabel() {
+		return messageLabel;
 	}
 
-	public void setTimeToLive(Duration timeToLive) {
-		this.timeToLive = timeToLive;
+	public String getToolResponseLabel() {
+		return toolResponseLabel;
 	}
 
+	public String getMediaLabel() {
+		return mediaLabel;
+	}
+
+	public void setToolCallLabel(String toolCallLabel) {
+		this.toolCallLabel = toolCallLabel;
+	}
+
+	public void setMetadataLabel(String metadataLabel) {
+		this.metadataLabel = metadataLabel;
+	}
+
+	public void setMessageLabel(String messageLabel) {
+		this.messageLabel = messageLabel;
+	}
+
+	public void setToolResponseLabel(String toolResponseLabel) {
+		this.toolResponseLabel = toolResponseLabel;
+	}
+
+	public void setMediaLabel(String mediaLabel) {
+		this.mediaLabel = mediaLabel;
+	}
 }

@@ -31,47 +31,58 @@ public final class Neo4jChatMemoryConfig {
 
 	// todo – make configurable
 
-	public static final String DEFAULT_ASSISTANT_LABEL = "AssistantMessage";
-
-	public static final String DEFAULT_USER_LABEL = "UserMessage";
-
 	public static final String DEFAULT_SESSION_LABEL = "Session";
-
+	public static final String DEFAULT_TOOL_CALL_LABEL = "ToolCall";
+	public static final String DEFAULT_METADATA_LABEL = "Metadata";
+	public static final String DEFAULT_MESSAGE_LABEL = "Message";
+	public static final String DEFAULT_TOOL_RESPONSE_LABEL = "ToolResponse";
+	public static final String DEFAULT_MEDIA_LABEL = "Media";
 	private static final Logger logger = LoggerFactory.getLogger(Neo4jChatMemoryConfig.class);
 
 	private final Driver driver;
-
-	private final Integer timeToLiveSeconds;
-	private final String assistantLabel;
-	private final String userLabel;
 	private final String sessionLabel;
-
-	public Driver getDriver() {
-		return driver;
-	}
-
-	public Integer getTimeToLiveSeconds() {
-		return timeToLiveSeconds;
-	}
-
-	public String getAssistantLabel() {
-		return assistantLabel;
-	}
-
-	public String getUserLabel() {
-		return userLabel;
-	}
+	private final String toolCallLabel;
+	private final String metadataLabel;
+	private final String messageLabel;
+	private final String toolResponseLabel;
+	private final String mediaLabel;
 
 	public String getSessionLabel() {
 		return sessionLabel;
 	}
 
+	public String getToolCallLabel() {
+		return toolCallLabel;
+	}
+
+	public String getMetadataLabel() {
+		return metadataLabel;
+	}
+
+	public String getMessageLabel() {
+		return messageLabel;
+	}
+
+	public String getToolResponseLabel() {
+		return toolResponseLabel;
+	}
+
+	public String getMediaLabel() {
+		return mediaLabel;
+	}
+
+	public Driver getDriver() {
+		return driver;
+	}
+
 	private Neo4jChatMemoryConfig(Builder builder) {
 		this.driver = builder.driver;
-		this.timeToLiveSeconds = builder.timeToLiveSeconds;
-		this.assistantLabel = builder.assistantLabel;
-		this.userLabel = builder.userLabel;
 		this.sessionLabel = builder.sessionLabel;
+		this.mediaLabel = builder.mediaLabel;
+		this.messageLabel = builder.messageLabel;
+		this.toolCallLabel = builder.toolCallLabel;
+		this.metadataLabel = builder.metadataLabel;
+		this.toolResponseLabel = builder.toolResponseLabel;
 	}
 
 	public static Builder builder() {
@@ -80,64 +91,84 @@ public final class Neo4jChatMemoryConfig {
 
 	public static final class Builder {
 
-		private Driver driver = null;
-
-		private String assistantLabel = DEFAULT_ASSISTANT_LABEL;
-
-		private String userLabel = DEFAULT_USER_LABEL;
-
+		private Driver driver;
 		private String sessionLabel = DEFAULT_SESSION_LABEL;
-
-		private Integer timeToLiveSeconds = null;
-
+		private String toolCallLabel = DEFAULT_TOOL_CALL_LABEL;
+		private String metadataLabel = DEFAULT_METADATA_LABEL;
+		private String messageLabel = DEFAULT_MESSAGE_LABEL;
+		private String toolResponseLabel = DEFAULT_TOOL_RESPONSE_LABEL;
+		private String mediaLabel = DEFAULT_MEDIA_LABEL;
 
 		private Builder() {
+		}
+
+		public String getSessionLabel() {
+			return sessionLabel;
+		}
+
+		public String getToolCallLabel() {
+			return toolCallLabel;
+		}
+
+		public String getMetadataLabel() {
+			return metadataLabel;
+		}
+
+		public String getMessageLabel() {
+			return messageLabel;
+		}
+
+		public String getToolResponseLabel() {
+			return toolResponseLabel;
+		}
+
+		public String getMediaLabel() {
+			return mediaLabel;
+		}
+
+		public Builder withSessionLabel(String sessionLabel) {
+			this.sessionLabel = sessionLabel;
+			return this;
+		}
+
+		public Builder withToolCallLabel(String toolCallLabel) {
+			this.toolCallLabel = toolCallLabel;
+			return this;
+		}
+
+		public Builder withMetadataLabel(String metadataLabel) {
+			this.metadataLabel = metadataLabel;
+			return this;
+		}
+
+		public Builder withMessageLabel(String messageLabel) {
+			this.messageLabel = messageLabel;
+			return this;
+		}
+
+		public Builder withToolResponseLabel(String toolResponseLabel) {
+			this.toolResponseLabel = toolResponseLabel;
+			return this;
+		}
+
+		public Builder withMediaLabel(String mediaLabel) {
+			this.mediaLabel = mediaLabel;
+			return this;
 		}
 
 		public Driver getDriver() {
 			return driver;
 		}
 
-		public String getAssistantLabel() {
-			return assistantLabel;
-		}
-
-		public String getUserLabel() {
-			return userLabel;
-		}
-
-		public Integer getTimeToLiveSeconds() {
-			return timeToLiveSeconds;
-		}
 
 		public Builder withDriver(Driver driver) {
 			this.driver = driver;
 			return this;
 		}
 
-		public Builder withAssistantLabelName(String name) {
-			this.assistantLabel = name;
-			return this;
-		}
-
-		public Builder withUserLabelName(String name) {
-			this.userLabel = name;
-			return this;
-		}
-
-		/** How long are messages kept for */
-		public Builder withTimeToLive(Duration timeToLive) {
-			if(timeToLive.isNegative()){
-				throw new IllegalArgumentException("timeToLive cannot be negative");
-			}
-			this.timeToLiveSeconds = (int) timeToLive.toSeconds();
-			return this;
-		}
-
 		public Neo4jChatMemoryConfig build() {
 			return new Neo4jChatMemoryConfig(this);
 		}
-
 	}
 
 }

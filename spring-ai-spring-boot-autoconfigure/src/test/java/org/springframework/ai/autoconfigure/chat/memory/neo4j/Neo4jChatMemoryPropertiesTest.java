@@ -19,27 +19,27 @@ package org.springframework.ai.autoconfigure.chat.memory.neo4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.autoconfigure.chat.memory.cassandra.CassandraChatMemoryProperties;
 import org.springframework.ai.chat.memory.cassandra.CassandraChatMemoryConfig;
+import org.springframework.ai.chat.memory.neo4j.Neo4jChatMemoryConfig;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * @author Mick Semb Wever
- * @author Jihoon Kim
+ * @author Enrico Rampazzo
  * @since 1.0.0
  */
-class CassandraChatMemoryPropertiesTest {
+class Neo4jChatMemoryPropertiesTest {
 
 	@Test
 	void defaultValues() {
-		var props = new CassandraChatMemoryProperties();
-		assertThat(props.getKeyspace()).isEqualTo(CassandraChatMemoryConfig.DEFAULT_KEYSPACE_NAME);
-		assertThat(props.getTable()).isEqualTo(CassandraChatMemoryConfig.DEFAULT_TABLE_NAME);
-		assertThat(props.getAssistantColumn()).isEqualTo(CassandraChatMemoryConfig.DEFAULT_ASSISTANT_COLUMN_NAME);
-		assertThat(props.getUserColumn()).isEqualTo(CassandraChatMemoryConfig.DEFAULT_USER_COLUMN_NAME);
-		assertThat(props.getTimeToLive()).isNull();
-		assertThat(props.isInitializeSchema()).isTrue();
+		var props = new Neo4jChatMemoryProperties();
+		assertThat(props.getMediaLabel()).isEqualTo(Neo4jChatMemoryConfig.DEFAULT_MEDIA_LABEL);
+		assertThat(props.getMessageLabel()).isEqualTo(Neo4jChatMemoryConfig.DEFAULT_MESSAGE_LABEL);
+		assertThat(props.getMetadataLabel()).isEqualTo(Neo4jChatMemoryConfig.DEFAULT_METADATA_LABEL);
+		assertThat(props.getSessionLabel()).isEqualTo(Neo4jChatMemoryConfig.DEFAULT_SESSION_LABEL);
+		assertThat(props.getToolCallLabel()).isEqualTo(Neo4jChatMemoryConfig.DEFAULT_TOOL_CALL_LABEL);
+		assertThat(props.getToolResponseLabel()).isEqualTo(Neo4jChatMemoryConfig.DEFAULT_TOOL_RESPONSE_LABEL);
 	}
 
 	@Test
